@@ -1,1 +1,67 @@
-Follow this guide to install and use the ONRprocessing R package
+Follow this guide to install and use the ONRprocessing R package.
+Most of this example is also in "analysis_explore_v2"
+Each function has a Man page, so you can learn about a function by typing a '?' before the function. for example, '?scrapeAct'
+
+########################################
+1. Installing stuff
+
+Open R or RStudio and load the devtools package:
+
+>install.packages("devtools")
+>library(devtools)
+>install_github("lowrylab-cuboulder/ONRprocessing")
+
+########################################
+2. Loading data
+
+We need to load the telemetry data into R. I organized all the raw text files into new folders with their respective cohorts. Run the most 
+recent CLprocess_vX.X in the folder with the raw text data. What we want is the 'master.csv' file, which aggregates data from all mice in 
+the folder. If you click on the file from the RStudio file explorer, then you should have the option to import it. Whatever option you
+prefer, import the csv file into R. 
+
+In the following example I imported the 'master.csv' from cohort 1 and 2 (days -1 to 62) as 'c1' and 'c2'
+You'll need to tell R what mouse IDs are associated with the NLD animals. For cohort 1 and 2 that would be:
+
+>NLD = c('01','04','06','08','09','12','16','19','20','24','25','27','28','31')
+
+!IMPORTANT! If you are going to combine multiple data sets you need to concatenate them in a specific way. In this case, c2 has fewer rows 
+than c1. When we combine data frames need to have the same number of rows. We also only need the 'eday' and 'zt' variables from one data 
+set since they're same. Lastly, I don't care about eday -1, so I removed it.
+
+>catCohort <- cbind(c1[1:nrow(c2),],c2[,-c(1,2)])
+>catCohort <- catCohort[catCohort$eday > -1,]
+
+########################################
+3. Process data
+
+Now we can start manipulating and cleaning the data using the 'ONRprocessing' package. I just want the temperature data and to
+seperate out the NLD and CDR animals:
+
+>temp_data <- scrapeAct(NLD,catCohort)
+
+Next, we'll want to separate treatment groups, so I created some vectors to identify which animals belong to each group.
+
+>MvacCDR <- c('03','05','07','15','21','22','30')
+>MvacNLD <- c('01','04','06','16','19','24','27','31')
+
+#This step kind of takes a while
+>CDRdfs <- sepTrmt(MvacCDR,temp_data$CDR) 
+>NLDdfs <- sepTrmt(MvacNLD,temp_data$NLD)
+
+The sepTrmt function returns a few things. Please explore the data frames in the returned list. The data are now ready for 
+whatever type of analysis you want. For starters, we can plot each individual animal in a group with the 'plotAnimals' function.
+
+>plotAnimals(CDRdfs$long, 1, 4)
+
+########################################
+4. 'Binning' the data
+
+The last bit of processing we can do is to bin, or what I would call 'squeeze', the data. The purpose of this next function is take the 
+average of a time series over a given time interval. So instead of having data every minute, we may just want to look at the data every 
+10 minutes. To do this we would run:
+
+>CDRtrim_b10 <- squeezeData(cleanData(temp_data$CDR),10)
+
+!NOTE! We would run this after scraping the data. We also need to clean the data with the 'cleanData' function.
+
+
