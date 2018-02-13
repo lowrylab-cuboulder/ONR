@@ -7,9 +7,14 @@ Each function has a Man page, so you can learn about a function by typing a '?' 
 
 Open R or RStudio and load the devtools package:
 
+You only need to do this step once
 >install.packages("devtools")
 >library(devtools)
 >install_github("lowrylab-cuboulder/ONRprocessing")
+>library(ONRprocessing)
+
+Every other time you just need to execute this
+>library(ONRprocessing)
 
 ########################################
 2. Loading data
